@@ -15,6 +15,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 //必要なパッケージをインポートする
 const discord_js_1 = require("discord.js");
 const dotenv_1 = __importDefault(require("dotenv"));
+const http_1 = __importDefault(require("http"));
+const PORT = process.env.PORT || "3000";
+const server = http_1.default.createServer((req, res) => {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("Server is running\n");
+});
+server.listen(PORT, () => {
+    console.log(`Server is runnninfg om port ${PORT}`);
+});
 //.envファイルを読み込む
 dotenv_1.default.config();
 //Botで使うGatewayIntents、partials

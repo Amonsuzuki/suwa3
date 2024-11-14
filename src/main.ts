@@ -3,7 +3,7 @@ import { GatewayIntentBits, Client, Partials, Message } from "discord.js";
 import dotenv from "dotenv";
 import http from "http";
 
-const PORT: number = parseInt(process.env.PORT || "3000", 10);
+const PORT = process.env.PORT || "3000";
 
 const server = http.createServer(
   (req: http.IncomingMessage, res: http.ServerResponse) => {
