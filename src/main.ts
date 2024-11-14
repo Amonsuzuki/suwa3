@@ -1,23 +1,22 @@
 //必要なパッケージをインポートする
 import { GatewayIntentBits, Client, Partials, Message } from "discord.js";
-import dotenv from "dotenv";
-import http from "http";
-
-const PORT = process.env.PORT || "3000";
-
-const server = http.createServer(
-  (req: http.IncomingMessage, res: http.ServerResponse) => {
-    res.writeHead(200, { "Content-Type": "text/plain" });
-    res.end("Server is running\n");
-  }
-);
-
-server.listen(PORT, () => {
-  console.log(`Server is runnninfg om port ${PORT}`);
-});
+import dotenv, { parse } from "dotenv";
+import express from "express";
 
 //.envファイルを読み込む
 dotenv.config();
+
+const app = express();
+
+const PORT: number = parseInt(process.env.PORT || "3000");
+
+app.get("/", (req, res) => {
+  res.send("Suwa3 is running!");
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 
 //Botで使うGatewayIntents、partials
 const client = new Client({

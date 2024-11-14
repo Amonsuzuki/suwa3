@@ -22,7 +22,9 @@
     "y": "^0.3.2"
   },
   "dependencies": {
+    "@types/express": "^5.0.0",
     "discord.js": "^14.16.3",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1"
   }
 }
