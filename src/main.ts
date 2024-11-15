@@ -13,7 +13,6 @@ app.post("/", function (req, res) {
   console.log(`Received POST request.`);
   postCount++;
   if (postCount == 10) {
-    trigger();
     postCount = 0;
   }
   res.send("POST response by glitch");
