@@ -110,7 +110,7 @@ client.on("messageCreate", async (message: Message) => {
             durationHours ? `${durationHours}時間` : ""
           }${
             durationMinutes ? `${durationMinutes}分` : ""
-          }${durationSeconds}秒滞在しました。またね！`;
+          }${durationSeconds}秒滞在しました。`;
         }
       });
 
