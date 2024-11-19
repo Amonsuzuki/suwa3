@@ -1,9 +1,7 @@
-//必要なパッケージをインポートする
 import { GatewayIntentBits, Client, Partials, Message } from "discord.js";
-import dotenv, { parse } from "dotenv";
+import dotenv from "dotenv";
 import express from "express";
 
-//.envファイルを読み込む
 dotenv.config();
 
 const app = express();
@@ -30,7 +28,6 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel],
 });
 
-//Botがきちんと起動したか確認
 client.once("ready", () => {
   console.log("Ready!");
   if (client.user) {
@@ -38,15 +35,24 @@ client.once("ready", () => {
   }
 });
 
+const userStatus = new Map<string, { inTime: Date }>();
+
 client.on("messageCreate", async (message: Message) => {
   if (message.author.bot) return;
 
   if (message.content === "in") {
-    const date1 = new Date();
-    const formattedDate = date1.toLocaleString(); // 日時を文字列に変換
+    const inTime = new Date();
+    const formattedIntime = inTime.toLocaleString(); // 日時を文字列に変換
     const userName = message.author.username; // ユーザー名を取得
+    let responseMessage = "";
 
-    const responseMessage = `${userName}さんが${formattedDate}に入室しました。ウェルカム！`;
+    userStatus.set(message.author.id, { inTime });
+
+    if (userStatus.has(message.author.id)) {
+      responseMessage = `${userName}さんは既に入室しています。`;
+    } else {
+      responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！`;
+    }
 
     if (message.channel.isTextBased() && "send" in message.channel) {
       message.channel.send(responseMessage);
@@ -54,22 +60,68 @@ client.on("messageCreate", async (message: Message) => {
       console.error("This channel does not support sending messages.");
     }
   }
-});
-
-client.on("messageCreate", async (message: Message) => {
-  if (message.author.bot) return;
 
   if (message.content === "out") {
-    const date1 = new Date();
-    const formattedDate = date1.toLocaleString(); // 日時を文字列に変換
+    const outTime = new Date();
+    const formattedOutTime = outTime.toLocaleString(); // 日時を文字列に変換
     const userName = message.author.username; // ユーザー名を取得
 
-    const responseMessage = `${userName}さんが${formattedDate}に退室しました。またね！`;
+    if (userStatus.has(message.author.id)) {
+      const { inTime } = userStatus.get(message.author.id)!;
+      const durationMs = outTime.getTime() - inTime.getTime();
+      const durationHours = Math.floor(durationMs / 3600000);
+      const durationMinutes = Math.floor(durationMs / 60000);
+      const durationSeconds = Math.floor((durationMs % 60000) / 1000);
 
-    if (message.channel.isTextBased() && "send" in message.channel) {
-      message.channel.send(responseMessage);
+      userStatus.delete(message.author.id);
+
+      const responseMessage = `${userName}さんが${formattedOutTime}に退室しました。またね！\n滞在時間: ${
+        durationHours ? `${durationHours}時間` : null
+      }${durationMinutes}分${durationSeconds}秒`;
+
+      if (message.channel.isTextBased() && "send" in message.channel) {
+        message.channel.send(responseMessage);
+      } else {
+        console.error("This channel does not support sending messages.");
+      }
     } else {
-      console.error("This channel does not support sending messages.");
+      if (message.channel.isTextBased() && "send" in message.channel) {
+        message.channel.send(`${userName}さんはまだ入室していません。`);
+      }
+    }
+  }
+
+  if (message.content === "allout") {
+    const outTime = new Date();
+    const formattedOutTime = outTime.toLocaleString();
+    let responseMessage = `${formattedOutTime}に全てのユーザーが退室しました。\n`;
+
+    if (userStatus.size > 0) {
+      userStatus.forEach((value, userId) => {
+        const user = client.users.cache.get(userId);
+        if (user) {
+          const durationMs = outTime.getTime() - value.inTime.getTime();
+          const durationHours = Math.floor(durationMs / 3600000);
+          const durationMinutes = Math.floor(durationMs / 60000);
+          const durationSeconds = Math.floor((durationMs % 60000) / 1000);
+
+          responseMessage += `${user.username}さんは ${
+            durationHours ? `${durationHours}時間` : null
+          }${durationMinutes}分${durationSeconds}秒滞在しました。`;
+        }
+      });
+
+      userStatus.clear();
+
+      if (message.channel.isTextBased() && "send" in message.channel) {
+        message.channel.send(responseMessage);
+      } else {
+        console.error("This channel does not support sending messages.");
+      }
+    } else {
+      if (message.channel.isTextBased() && "send" in message.channel) {
+        message.channel.send("現在入室中のユーザーはいません。");
+      }
     }
   }
 });
