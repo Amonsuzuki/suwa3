@@ -35,6 +35,28 @@ client.once("ready", () => {
   }
 });
 
+const apiUrl = "https://api.api-ninjas.com/v1/quotes";
+
+async function fetchQuotes(): Promise<any> {
+  try {
+    const response = await fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        "X-Api-Key": process.env.NINJAS || "",
+      },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    } else {
+      const errorText = await response.text();
+      throw new Error(`Error: ${response.status} - ${await errorText}`);
+    }
+  } catch (error) {
+    return Promise.reject(error);
+  }
+}
+
 const userStatus = new Map<string, { inTime: Date }>();
 
 client.on("messageCreate", async (message: Message) => {
@@ -50,7 +72,9 @@ client.on("messageCreate", async (message: Message) => {
       responseMessage = `${userName}さんは既に入室しています。`;
     } else {
       userStatus.set(message.author.id, { inTime });
-      responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！`;
+      responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！\n`;
+      const quotes = await fetchQuotes();
+      if (quotes) responseMessage += quotes;
     }
 
     if (message.channel.isTextBased() && "send" in message.channel) {
