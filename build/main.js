@@ -83,7 +83,7 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
             responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！\n`;
             const quotes = yield fetchQuotes();
             if (quotes)
-                responseMessage += quotes;
+                responseMessage += JSON.stringify(quotes);
         }
         if (message.channel.isTextBased() && "send" in message.channel) {
             message.channel.send(responseMessage);

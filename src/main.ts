@@ -75,7 +75,7 @@ client.on("messageCreate", async (message: Message) => {
       userStatus.set(message.author.id, { inTime });
       responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！\n`;
       const quotes = await fetchQuotes();
-      if (quotes) responseMessage += quotes;
+      if (quotes) responseMessage += JSON.stringify(quotes);
     }
 
     if (message.channel.isTextBased() && "send" in message.channel) {
