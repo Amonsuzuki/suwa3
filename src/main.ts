@@ -46,11 +46,10 @@ client.on("messageCreate", async (message: Message) => {
     const userName = message.author.username; // ユーザー名を取得
     let responseMessage = "";
 
-    userStatus.set(message.author.id, { inTime });
-
     if (userStatus.has(message.author.id)) {
       responseMessage = `${userName}さんは既に入室しています。`;
     } else {
+      userStatus.set(message.author.id, { inTime });
       responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！`;
     }
 
@@ -76,8 +75,10 @@ client.on("messageCreate", async (message: Message) => {
       userStatus.delete(message.author.id);
 
       const responseMessage = `${userName}さんが${formattedOutTime}に退室しました。\n滞在時間: ${
-        durationHours ? `${durationHours}時間` : null
-      }${durationMinutes}分${durationSeconds}秒。またね！`;
+        durationHours ? `${durationHours}時間` : ""
+      }${
+        durationMinutes ? `${durationMinutes}分` : ""
+      }${durationSeconds}秒。またね！`;
 
       if (message.channel.isTextBased() && "send" in message.channel) {
         message.channel.send(responseMessage);
@@ -105,9 +106,11 @@ client.on("messageCreate", async (message: Message) => {
           const durationMinutes = Math.floor(durationMs / 60000);
           const durationSeconds = Math.floor((durationMs % 60000) / 1000);
 
-          responseMessage += `${user.username}さんは ${
-            durationHours ? `${durationHours}時間` : null
-          }${durationMinutes}分${durationSeconds}秒滞在しました。\n`;
+          responseMessage += `${user.username}さんは${
+            durationHours ? `${durationHours}時間` : ""
+          }${
+            durationMinutes ? `${durationMinutes}分` : ""
+          }${durationSeconds}秒滞在しました。またね！`;
         }
       });
 
