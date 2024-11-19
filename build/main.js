@@ -41,25 +41,37 @@ client.once("ready", () => {
         console.log(client.user.tag);
     }
 });
+/*
 const apiUrl = "https://api.api-ninjas.com/v1/quotes";
 const apiKey = process.env.NINJAS;
-function fetchQuotes() {
+
+async function fetchQuotes(): Promise<any> {
+  try {
+    const response = await fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        "X-Api-Key": apiKey || "",
+      },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    } else {
+      const errorText = await response.text();
+      throw new Error(`Error: ${response.status} - ${await errorText}`);
+    }
+  } catch (error) {
+    return Promise.reject(error);
+  }
+}
+*/
+const apiUrl = "https://zenquotes.io/api/random";
+function fetchQuotes2() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const response = yield fetch(apiUrl, {
-                method: "GET",
-                headers: {
-                    "X-Api-Key": apiKey || "",
-                },
-            });
-            if (response.ok) {
-                const data = yield response.json();
-                return data;
-            }
-            else {
-                const errorText = yield response.text();
-                throw new Error(`Error: ${response.status} - ${yield errorText}`);
-            }
+            const response = yield fetch(apiUrl);
+            const data = yield response.json();
+            return data;
         }
         catch (error) {
             return Promise.reject(error);
@@ -81,9 +93,11 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
         else {
             userStatus.set(message.author.id, { inTime });
             responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！\n`;
-            const quotes = yield fetchQuotes();
-            if (quotes)
-                responseMessage += JSON.stringify(quotes);
+            const quotes = yield fetchQuotes2();
+            if (quotes && quotes.length > 0) {
+                const firstQuote = quotes[0];
+                responseMessage += `"${firstQuote.q}"\n${firstQuote.a}`;
+            }
         }
         if (message.channel.isTextBased() && "send" in message.channel) {
             message.channel.send(responseMessage);

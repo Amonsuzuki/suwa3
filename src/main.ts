@@ -34,7 +34,7 @@ client.once("ready", () => {
     console.log(client.user.tag);
   }
 });
-
+/*
 const apiUrl = "https://api.api-ninjas.com/v1/quotes";
 const apiKey = process.env.NINJAS;
 
@@ -57,6 +57,19 @@ async function fetchQuotes(): Promise<any> {
     return Promise.reject(error);
   }
 }
+*/
+
+const apiUrl = "https://zenquotes.io/api/random";
+
+async function fetchQuotes2(): Promise<any> {
+  try {
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return Promise.reject(error);
+  }
+}
 
 const userStatus = new Map<string, { inTime: Date }>();
 
@@ -74,8 +87,11 @@ client.on("messageCreate", async (message: Message) => {
     } else {
       userStatus.set(message.author.id, { inTime });
       responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！\n`;
-      const quotes = await fetchQuotes();
-      if (quotes) responseMessage += JSON.stringify(quotes);
+      const quotes = await fetchQuotes2();
+      if (quotes && quotes.length > 0) {
+        const firstQuote = quotes[0];
+        responseMessage += `"${firstQuote.q}"\n${firstQuote.a}`;
+      }
     }
 
     if (message.channel.isTextBased() && "send" in message.channel) {
