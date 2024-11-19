@@ -1,6 +1,8 @@
 import { GatewayIntentBits, Client, Partials, Message } from "discord.js";
 import dotenv from "dotenv";
 import express from "express";
+import fs from "fs/promises";
+import path from "path";
 
 dotenv.config();
 
@@ -76,7 +78,11 @@ const userStatus = new Map<string, { inTime: Date }>();
 client.on("messageCreate", async (message: Message) => {
   if (message.author.bot) return;
 
-  if (message.content === "in") {
+  const args = message.content.trim().split(/\s+/);
+  const command = args[0];
+  const option = args[1];
+
+  if (command === "in") {
     const inTime = new Date();
     const formattedIntime = inTime.toLocaleString(); // 日時を文字列に変換
     const userName = message.member?.nickname || message.author.username; // ユーザー名を取得
@@ -88,9 +94,22 @@ client.on("messageCreate", async (message: Message) => {
       userStatus.set(message.author.id, { inTime });
       responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！\n`;
       const quotes = await fetchQuotes2();
-      if (quotes && quotes.length > 0) {
+      if (quotes && quotes.length > 0 && option === undefined) {
         const firstQuote = quotes[0];
         responseMessage += `"${firstQuote.q}"\n${firstQuote.a}`;
+      }
+      if (option === "-jobs") {
+        try {
+          const filepath = path.resolve(__dirname, "../data/quotes/jobs.json");
+          const data = await fs.readFile(filepath, "utf-8");
+          const quotes: string[] = JSON.parse(data);
+
+          const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+          responseMessage += `"${randomQuote}"\nSteve Jobs`;
+        } catch (error) {
+          console.error("Failed to read jobs.json", error);
+          responseMessage += "Steve Jobsの名言を取得できませんでした。";
+        }
       }
     }
 

@@ -15,6 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const discord_js_1 = require("discord.js");
 const dotenv_1 = __importDefault(require("dotenv"));
 const express_1 = __importDefault(require("express"));
+const promises_1 = __importDefault(require("fs/promises"));
+const path_1 = __importDefault(require("path"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = parseInt(process.env.PORT || "3000");
@@ -83,7 +85,10 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
     var _a, _b;
     if (message.author.bot)
         return;
-    if (message.content === "in") {
+    const args = message.content.trim().split(/\s+/);
+    const command = args[0];
+    const option = args[1];
+    if (command === "in") {
         const inTime = new Date();
         const formattedIntime = inTime.toLocaleString(); // 日時を文字列に変換
         const userName = ((_a = message.member) === null || _a === void 0 ? void 0 : _a.nickname) || message.author.username; // ユーザー名を取得
@@ -95,9 +100,23 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
             userStatus.set(message.author.id, { inTime });
             responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！\n`;
             const quotes = yield fetchQuotes2();
-            if (quotes && quotes.length > 0) {
+            if (quotes && quotes.length > 0 && option === undefined) {
                 const firstQuote = quotes[0];
                 responseMessage += `"${firstQuote.q}"\n${firstQuote.a}`;
+            }
+            if (option === "-jobs") {
+                try {
+                    const filepath = path_1.default.resolve(__dirname, "../data/quotes/jobs.json");
+                    console.log(filepath);
+                    const data = yield promises_1.default.readFile(filepath, "utf-8");
+                    const quotes = JSON.parse(data);
+                    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+                    responseMessage += `"${randomQuote}"\nSteve Jobs`;
+                }
+                catch (error) {
+                    console.error("Failed to read jobs.json", error);
+                    responseMessage += "Steve Jobsの名言を取得できませんでした。";
+                }
             }
         }
         if (message.channel.isTextBased() && "send" in message.channel) {
