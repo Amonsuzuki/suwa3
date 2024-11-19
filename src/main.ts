@@ -6,19 +6,6 @@ import express from "express";
 //.envファイルを読み込む
 dotenv.config();
 
-let postCount = 0;
-const app = express();
-app.listen(3000);
-app.post("/", function (req, res) {
-  console.log(`Received POST request.`);
-  postCount++;
-  if (postCount == 10) {
-    postCount = 0;
-  }
-  res.send("POST response by glitch");
-});
-
-/*
 const app = express();
 
 const PORT: number = parseInt(process.env.PORT || "3000");
@@ -30,7 +17,6 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-*/
 
 //Botで使うGatewayIntents、partials
 const client = new Client({
