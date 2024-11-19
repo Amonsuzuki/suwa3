@@ -80,12 +80,13 @@ function fetchQuotes2() {
 }
 const userStatus = new Map();
 client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     if (message.author.bot)
         return;
     if (message.content === "in") {
         const inTime = new Date();
         const formattedIntime = inTime.toLocaleString(); // 日時を文字列に変換
-        const userName = message.author.username; // ユーザー名を取得
+        const userName = ((_a = message.member) === null || _a === void 0 ? void 0 : _a.nickname) || message.author.username; // ユーザー名を取得
         let responseMessage = "";
         if (userStatus.has(message.author.id)) {
             responseMessage = `${userName}さんは既に入室しています。`;
@@ -109,7 +110,7 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
     if (message.content === "out") {
         const outTime = new Date();
         const formattedOutTime = outTime.toLocaleString(); // 日時を文字列に変換
-        const userName = message.author.username; // ユーザー名を取得
+        const userName = ((_b = message.member) === null || _b === void 0 ? void 0 : _b.nickname) || message.author.username; // ユーザー名を取得
         if (userStatus.has(message.author.id)) {
             const { inTime } = userStatus.get(message.author.id);
             const durationMs = outTime.getTime() - inTime.getTime();
@@ -137,17 +138,43 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
         let responseMessage = `${formattedOutTime}に全てのユーザーが退室しました。\n`;
         if (userStatus.size > 0) {
             userStatus.forEach((value, userId) => {
-                const user = client.users.cache.get(userId);
-                if (user) {
+                var _a;
+                const member = (_a = message.guild) === null || _a === void 0 ? void 0 : _a.members.cache.get(userId);
+                if (member) {
+                    const userName = member.nickname || member.user.username;
                     const durationMs = outTime.getTime() - value.inTime.getTime();
                     const durationHours = Math.floor(durationMs / 3600000);
                     const durationMinutes = Math.floor(durationMs / 60000);
                     const durationSeconds = Math.floor((durationMs % 60000) / 1000);
-                    responseMessage += `${user.username}さんは${durationHours ? `${durationHours}時間` : ""}${durationMinutes ? `${durationMinutes}分` : ""}${durationSeconds}秒滞在しました。\n`;
+                    responseMessage += `${userName}さんは${durationHours ? `${durationHours}時間` : ""}${durationMinutes ? `${durationMinutes}分` : ""}${durationSeconds}秒滞在しました。\n`;
                 }
             });
             responseMessage += "またね！";
             userStatus.clear();
+            if (message.channel.isTextBased() && "send" in message.channel) {
+                message.channel.send(responseMessage);
+            }
+            else {
+                console.error("This channel does not support sending messages.");
+            }
+        }
+        else {
+            if (message.channel.isTextBased() && "send" in message.channel) {
+                message.channel.send("現在入室中のユーザーはいません。");
+            }
+        }
+    }
+    if (message.content === "status") {
+        let responseMessage = "以下のユーザーが滞在中です。\n";
+        if (userStatus.size > 0) {
+            userStatus.forEach((value, userId) => {
+                var _a;
+                const member = (_a = message.guild) === null || _a === void 0 ? void 0 : _a.members.cache.get(userId);
+                if (member) {
+                    const userName = member.nickname || member.user.username;
+                    responseMessage += `${userName}さん\n`;
+                }
+            });
             if (message.channel.isTextBased() && "send" in message.channel) {
                 message.channel.send(responseMessage);
             }

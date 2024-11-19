@@ -79,7 +79,7 @@ client.on("messageCreate", async (message: Message) => {
   if (message.content === "in") {
     const inTime = new Date();
     const formattedIntime = inTime.toLocaleString(); // 日時を文字列に変換
-    const userName = message.author.username; // ユーザー名を取得
+    const userName = message.member?.nickname || message.author.username; // ユーザー名を取得
     let responseMessage = "";
 
     if (userStatus.has(message.author.id)) {
@@ -104,7 +104,7 @@ client.on("messageCreate", async (message: Message) => {
   if (message.content === "out") {
     const outTime = new Date();
     const formattedOutTime = outTime.toLocaleString(); // 日時を文字列に変換
-    const userName = message.author.username; // ユーザー名を取得
+    const userName = message.member?.nickname || message.author.username; // ユーザー名を取得
 
     if (userStatus.has(message.author.id)) {
       const { inTime } = userStatus.get(message.author.id)!;
@@ -140,14 +140,15 @@ client.on("messageCreate", async (message: Message) => {
 
     if (userStatus.size > 0) {
       userStatus.forEach((value, userId) => {
-        const user = client.users.cache.get(userId);
-        if (user) {
+        const member = message.guild?.members.cache.get(userId);
+        if (member) {
+          const userName = member.nickname || member.user.username;
           const durationMs = outTime.getTime() - value.inTime.getTime();
           const durationHours = Math.floor(durationMs / 3600000);
           const durationMinutes = Math.floor(durationMs / 60000);
           const durationSeconds = Math.floor((durationMs % 60000) / 1000);
 
-          responseMessage += `${user.username}さんは${
+          responseMessage += `${userName}さんは${
             durationHours ? `${durationHours}時間` : ""
           }${
             durationMinutes ? `${durationMinutes}分` : ""
@@ -159,6 +160,27 @@ client.on("messageCreate", async (message: Message) => {
 
       userStatus.clear();
 
+      if (message.channel.isTextBased() && "send" in message.channel) {
+        message.channel.send(responseMessage);
+      } else {
+        console.error("This channel does not support sending messages.");
+      }
+    } else {
+      if (message.channel.isTextBased() && "send" in message.channel) {
+        message.channel.send("現在入室中のユーザーはいません。");
+      }
+    }
+  }
+  if (message.content === "status") {
+    let responseMessage = "以下のユーザーが滞在中です。\n";
+    if (userStatus.size > 0) {
+      userStatus.forEach((value, userId) => {
+        const member = message.guild?.members.cache.get(userId);
+        if (member) {
+          const userName = member.nickname || member.user.username;
+          responseMessage += `${userName}さん\n`;
+        }
+      });
       if (message.channel.isTextBased() && "send" in message.channel) {
         message.channel.send(responseMessage);
       } else {
