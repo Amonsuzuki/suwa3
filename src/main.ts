@@ -36,13 +36,14 @@ client.once("ready", () => {
 });
 
 const apiUrl = "https://api.api-ninjas.com/v1/quotes";
+const apiKey = process.env.NINJAS;
 
 async function fetchQuotes(): Promise<any> {
   try {
     const response = await fetch(apiUrl, {
       method: "GET",
       headers: {
-        "X-Api-Key": process.env.NINJAS || "",
+        "X-Api-Key": apiKey || "",
       },
     });
     if (response.ok) {
