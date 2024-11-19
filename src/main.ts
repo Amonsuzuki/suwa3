@@ -75,9 +75,9 @@ client.on("messageCreate", async (message: Message) => {
 
       userStatus.delete(message.author.id);
 
-      const responseMessage = `${userName}さんが${formattedOutTime}に退室しました。またね！\n滞在時間: ${
+      const responseMessage = `${userName}さんが${formattedOutTime}に退室しました。\n滞在時間: ${
         durationHours ? `${durationHours}時間` : null
-      }${durationMinutes}分${durationSeconds}秒`;
+      }${durationMinutes}分${durationSeconds}秒。またね！`;
 
       if (message.channel.isTextBased() && "send" in message.channel) {
         message.channel.send(responseMessage);
@@ -107,9 +107,11 @@ client.on("messageCreate", async (message: Message) => {
 
           responseMessage += `${user.username}さんは ${
             durationHours ? `${durationHours}時間` : null
-          }${durationMinutes}分${durationSeconds}秒滞在しました。`;
+          }${durationMinutes}分${durationSeconds}秒滞在しました。\n`;
         }
       });
+
+      responseMessage += "またね！";
 
       userStatus.clear();
 
