@@ -172,7 +172,8 @@ client.on("messageCreate", async (message: Message) => {
       const { inTime } = userStatus.get(message.author.id)!;
       const durationMs = outTime.getTime() - inTime.getTime();
       const durationHours = Math.floor(durationMs / 3600000);
-      const durationMinutes = Math.floor(durationMs / 60000);
+      const durationMinutes =
+        Math.floor(durationMs / 60000) - durationHours * 60;
       const durationSeconds = Math.floor((durationMs % 60000) / 1000);
 
       userStatus.delete(message.author.id);
@@ -207,7 +208,8 @@ client.on("messageCreate", async (message: Message) => {
           const userName = member.nickname || member.user.username;
           const durationMs = outTime.getTime() - value.inTime.getTime();
           const durationHours = Math.floor(durationMs / 3600000);
-          const durationMinutes = Math.floor(durationMs / 60000);
+          const durationMinutes =
+            Math.floor(durationMs / 60000) - durationHours * 60;
           const durationSeconds = Math.floor((durationMs % 60000) / 1000);
 
           responseMessage += `${userName}さんは${
