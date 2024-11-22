@@ -1,4 +1,10 @@
-import { GatewayIntentBits, Client, Partials, Message } from "discord.js";
+import {
+  GatewayIntentBits,
+  Client,
+  Partials,
+  Message,
+  ChannelType,
+} from "discord.js";
 import dotenv from "dotenv";
 import express from "express";
 import fs from "fs/promises";
@@ -74,6 +80,43 @@ async function fetchQuotes2(): Promise<any> {
 }
 
 const userStatus = new Map<string, { inTime: Date }>();
+
+client.once("ready", () => {
+  if (client.user) {
+    console.log(`Logged in as ${client.user.tag}!`);
+  } else {
+    console.error("Client user is null.");
+  }
+
+  // 1時間ごとに "status" コマンドの処理を実行
+  setInterval(async () => {
+    const channelId = "1300296856969936906"; // 自動実行メッセージを送信するチャンネルのID
+    const channel = client.channels.cache.get(channelId);
+
+    // チャンネルがギルドチャンネルか確認する
+    if (
+      channel?.isTextBased() &&
+      channel.type !== ChannelType.DM &&
+      "guild" in channel
+    ) {
+      let responseMessage = "現在、以下のユーザーが滞在中です。\n";
+      if (userStatus.size > 0) {
+        userStatus.forEach((value, userId) => {
+          const member = channel.guild.members.cache.get(userId); // channel.guild を安全に使用
+          if (member) {
+            const userName = member.nickname || member.user.username;
+            responseMessage += `${userName}さん\n`;
+          }
+        });
+        channel.send(responseMessage);
+      } else {
+        channel.send("現在入室中のユーザーはいません。");
+      }
+    } else {
+      console.error("指定されたチャンネルはメッセージを送信できません。");
+    }
+  }, 3600000); // 3600000ミリ秒 = 1時間
+});
 
 client.on("messageCreate", async (message: Message) => {
   if (message.author.bot) return;
