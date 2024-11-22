@@ -82,7 +82,7 @@ client.on("messageCreate", async (message: Message) => {
   const command = args[0];
   const option = args[1];
 
-  if (command === "in") {
+  if (command === "i") {
     const inTime = new Date();
     const formattedIntime = inTime.toLocaleString(); // 日時を文字列に変換
     const userName = message.member?.nickname || message.author.username; // ユーザー名を取得
@@ -120,7 +120,7 @@ client.on("messageCreate", async (message: Message) => {
     }
   }
 
-  if (message.content === "out") {
+  if (message.content === "o") {
     const outTime = new Date();
     const formattedOutTime = outTime.toLocaleString(); // 日時を文字列に変換
     const userName = message.member?.nickname || message.author.username; // ユーザー名を取得
@@ -152,7 +152,7 @@ client.on("messageCreate", async (message: Message) => {
     }
   }
 
-  if (message.content === "allout") {
+  if (message.content === "allo") {
     const outTime = new Date();
     const formattedOutTime = outTime.toLocaleString();
     let responseMessage = `${formattedOutTime}に全てのユーザーが退室しました。\n`;
