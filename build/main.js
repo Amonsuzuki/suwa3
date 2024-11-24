@@ -17,6 +17,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const express_1 = __importDefault(require("express"));
 const promises_1 = __importDefault(require("fs/promises"));
 const path_1 = __importDefault(require("path"));
+const index_1 = require("./index");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = parseInt(process.env.PORT || "3000");
@@ -81,6 +82,41 @@ function fetchQuotes2() {
     });
 }
 const userStatus = new Map();
+client.once("ready", () => {
+    if (client.user) {
+        console.log(`Logged in as ${client.user.tag}!`);
+    }
+    else {
+        console.error("Client user is null.");
+    }
+    // 1時間ごとに "status" コマンドの処理を実行
+    setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
+        const channelId = "1300296856969936906"; // 自動実行メッセージを送信するチャンネルのID
+        const channel = client.channels.cache.get(channelId);
+        // チャンネルがギルドチャンネルか確認する
+        if ((channel === null || channel === void 0 ? void 0 : channel.isTextBased()) &&
+            channel.type !== discord_js_1.ChannelType.DM &&
+            "guild" in channel) {
+            let responseMessage = "現在、以下のユーザーが滞在中です。\n";
+            if (userStatus.size > 0) {
+                userStatus.forEach((value, userId) => {
+                    const member = channel.guild.members.cache.get(userId); // channel.guild を安全に使用
+                    if (member) {
+                        const userName = member.nickname || member.user.username;
+                        responseMessage += `${userName}さん\n`;
+                    }
+                });
+                channel.send(responseMessage);
+            }
+            else {
+                channel.send("現在入室中のユーザーはいません。");
+            }
+        }
+        else {
+            console.error("指定されたチャンネルはメッセージを送信できません。");
+        }
+    }), 3600000); // 3600000ミリ秒 = 1時間
+});
 client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     if (message.author.bot)
@@ -88,7 +124,7 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
     const args = message.content.trim().split(/\s+/);
     const command = args[0];
     const option = args[1];
-    if (command === "in") {
+    if (command === "i") {
         const inTime = new Date();
         const formattedIntime = inTime.toLocaleString(); // 日時を文字列に変換
         const userName = ((_a = message.member) === null || _a === void 0 ? void 0 : _a.nickname) || message.author.username; // ユーザー名を取得
@@ -107,7 +143,6 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
             if (option === "-jobs") {
                 try {
                     const filepath = path_1.default.resolve(__dirname, "../data/quotes/jobs.json");
-                    console.log(filepath);
                     const data = yield promises_1.default.readFile(filepath, "utf-8");
                     const quotes = JSON.parse(data);
                     const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
@@ -118,6 +153,13 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
                     responseMessage += "Steve Jobsの名言を取得できませんでした。";
                 }
             }
+            try {
+                yield (0, index_1.appendToSheet)(userName, formattedIntime);
+            }
+            catch (error) {
+                console.error("Failed to append to the sheet", error);
+                responseMessage += "スプレッドシートへの記録に失敗しました。";
+            }
         }
         if (message.channel.isTextBased() && "send" in message.channel) {
             message.channel.send(responseMessage);
@@ -126,7 +168,7 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
             console.error("This channel does not support sending messages.");
         }
     }
-    if (message.content === "out") {
+    if (message.content === "o") {
         const outTime = new Date();
         const formattedOutTime = outTime.toLocaleString(); // 日時を文字列に変換
         const userName = ((_b = message.member) === null || _b === void 0 ? void 0 : _b.nickname) || message.author.username; // ユーザー名を取得
@@ -134,7 +176,7 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
             const { inTime } = userStatus.get(message.author.id);
             const durationMs = outTime.getTime() - inTime.getTime();
             const durationHours = Math.floor(durationMs / 3600000);
-            const durationMinutes = Math.floor(durationMs / 60000);
+            const durationMinutes = Math.floor(durationMs / 60000) - durationHours * 60;
             const durationSeconds = Math.floor((durationMs % 60000) / 1000);
             userStatus.delete(message.author.id);
             const responseMessage = `${userName}さんが${formattedOutTime}に退室しました。\n滞在時間: ${durationHours ? `${durationHours}時間` : ""}${durationMinutes ? `${durationMinutes}分` : ""}${durationSeconds}秒。またね！`;
@@ -151,7 +193,7 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
             }
         }
     }
-    if (message.content === "allout") {
+    if (message.content === "allo") {
         const outTime = new Date();
         const formattedOutTime = outTime.toLocaleString();
         let responseMessage = `${formattedOutTime}に全てのユーザーが退室しました。\n`;
@@ -163,7 +205,7 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
                     const userName = member.nickname || member.user.username;
                     const durationMs = outTime.getTime() - value.inTime.getTime();
                     const durationHours = Math.floor(durationMs / 3600000);
-                    const durationMinutes = Math.floor(durationMs / 60000);
+                    const durationMinutes = Math.floor(durationMs / 60000) - durationHours * 60;
                     const durationSeconds = Math.floor((durationMs % 60000) / 1000);
                     responseMessage += `${userName}さんは${durationHours ? `${durationHours}時間` : ""}${durationMinutes ? `${durationMinutes}分` : ""}${durationSeconds}秒滞在しました。\n`;
                 }

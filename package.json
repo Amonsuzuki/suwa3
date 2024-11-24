@@ -5,7 +5,7 @@
   "scripts": {
     "test": "ts-node src/main.ts",
     "start": "node build/main.js",
-    "build": "tsc -p ."
+    "build": "tsc -p . && cp src/index.js build/"
   },
   "keywords": [],
   "author": "",
@@ -25,6 +25,7 @@
     "@types/express": "^5.0.0",
     "discord.js": "^14.16.3",
     "dotenv": "^16.4.5",
-    "express": "^4.21.1"
+    "express": "^4.21.1",
+    "googleapis": "^144.0.0"
   }
 }

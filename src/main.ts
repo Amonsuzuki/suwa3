@@ -9,6 +9,7 @@ import dotenv from "dotenv";
 import express from "express";
 import fs from "fs/promises";
 import path from "path";
+import { appendToSheet } from "./index.js";
 
 dotenv.config();
 
@@ -80,7 +81,7 @@ async function fetchQuotes2(): Promise<any> {
 }
 
 const userStatus = new Map<string, { inTime: Date }>();
-
+/*
 client.once("ready", () => {
   if (client.user) {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -117,6 +118,7 @@ client.once("ready", () => {
     }
   }, 3600000); // 3600000ミリ秒 = 1時間
 });
+*/
 
 client.on("messageCreate", async (message: Message) => {
   if (message.author.bot) return;
@@ -134,6 +136,7 @@ client.on("messageCreate", async (message: Message) => {
     if (userStatus.has(message.author.id)) {
       responseMessage = `${userName}さんは既に入室しています。`;
     } else {
+      /*
       userStatus.set(message.author.id, { inTime });
       responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！\n`;
       const quotes = await fetchQuotes2();
@@ -153,6 +156,49 @@ client.on("messageCreate", async (message: Message) => {
           console.error("Failed to read jobs.json", error);
           responseMessage += "Steve Jobsの名言を取得できませんでした。";
         }
+      }
+      try {
+        const action = "入室";
+        console.log(userName, formattedIntime, action);
+
+        await appendToSheet(userName, formattedIntime, action);
+        console.log(userName, formattedIntime, action);
+      } catch (error) {
+        console.error("Failed to append to the sheet", error);
+        responseMessage += "スプレッドシートへの記録に失敗しました。";
+      }
+    }
+      */
+      console.log("test");
+      try {
+        userStatus.set(message.author.id, { inTime });
+        responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！\n`;
+
+        const action = "入室";
+        // 並行処理で効率化
+        console.log(userName, formattedIntime, action);
+
+        const [quotes, appendResult] = await Promise.all([
+          fetchQuotes2(),
+          appendToSheet(userName, formattedIntime, action),
+        ]);
+
+        if (quotes && quotes.length > 0 && option === undefined) {
+          const firstQuote = quotes[0];
+          responseMessage += `"${firstQuote.q}"\n${firstQuote.a}`;
+        }
+
+        if (option === "-jobs") {
+          const filepath = path.resolve(__dirname, "../data/quotes/jobs.json");
+          const data = await fs.readFile(filepath, "utf-8");
+          const jobsQuotes: string[] = JSON.parse(data);
+          const randomQuote =
+            jobsQuotes[Math.floor(Math.random() * jobsQuotes.length)];
+          responseMessage += `"${randomQuote}"\nSteve Jobs`;
+        }
+      } catch (error) {
+        console.error("エラーが発生しました:", error);
+        responseMessage += "入室中に問題が発生しました。";
       }
     }
 
@@ -178,7 +224,7 @@ client.on("messageCreate", async (message: Message) => {
 
       userStatus.delete(message.author.id);
 
-      const responseMessage = `${userName}さんが${formattedOutTime}に退室しました。\n滞在時間: ${
+      let responseMessage = `${userName}さんが${formattedOutTime}に退室しました。\n滞在時間: ${
         durationHours ? `${durationHours}時間` : ""
       }${
         durationMinutes ? `${durationMinutes}分` : ""
@@ -188,6 +234,14 @@ client.on("messageCreate", async (message: Message) => {
         message.channel.send(responseMessage);
       } else {
         console.error("This channel does not support sending messages.");
+      }
+      try {
+        const action = "退室";
+        console.log(userName, formattedOutTime, action);
+        await appendToSheet(userName, formattedOutTime, action);
+      } catch (error) {
+        console.error("Failed to append to the sheet", error);
+        responseMessage += "スプレッドシートへの記録に失敗しました。";
       }
     } else {
       if (message.channel.isTextBased() && "send" in message.channel) {
@@ -202,7 +256,7 @@ client.on("messageCreate", async (message: Message) => {
     let responseMessage = `${formattedOutTime}に全てのユーザーが退室しました。\n`;
 
     if (userStatus.size > 0) {
-      userStatus.forEach((value, userId) => {
+      userStatus.forEach(async (value, userId) => {
         const member = message.guild?.members.cache.get(userId);
         if (member) {
           const userName = member.nickname || member.user.username;
@@ -217,10 +271,15 @@ client.on("messageCreate", async (message: Message) => {
           }${
             durationMinutes ? `${durationMinutes}分` : ""
           }${durationSeconds}秒滞在しました。\n`;
+          try {
+            const action = "退室";
+            await appendToSheet(userName, formattedOutTime, action);
+          } catch (error) {
+            console.error("Failed to append to the sheet", error);
+            responseMessage += "スプレッドシートへの記録に失敗しました。";
+          }
         }
       });
-
-      responseMessage += "またね！";
 
       userStatus.clear();
 
