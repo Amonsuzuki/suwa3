@@ -96,26 +96,22 @@ client.once("ready", () => {
         // チャンネルがギルドチャンネルか確認する
         if ((channel === null || channel === void 0 ? void 0 : channel.isTextBased()) &&
             channel.type !== discord_js_1.ChannelType.DM &&
-            "guild" in channel) {
+            "guild" in channel &&
+            userStatus.size > 0) {
             let responseMessage = "現在、以下のユーザーが滞在中です。\n";
-            if (userStatus.size > 0) {
-                userStatus.forEach((value, userId) => {
-                    const member = channel.guild.members.cache.get(userId); // channel.guild を安全に使用
-                    if (member) {
-                        const userName = member.nickname || member.user.username;
-                        responseMessage += `${userName}さん\n`;
-                    }
-                });
-                channel.send(responseMessage);
-            }
-            else {
-                channel.send("現在入室中のユーザーはいません。");
-            }
+            userStatus.forEach((value, userId) => {
+                const member = channel.guild.members.cache.get(userId); // channel.guild を安全に使用
+                if (member) {
+                    const userName = member.nickname || member.user.username;
+                    responseMessage += `${userName}さん\n`;
+                }
+            });
+            channel.send(responseMessage);
         }
         else {
             console.error("指定されたチャンネルはメッセージを送信できません。");
         }
-    }), 3600000); // 3600000ミリ秒 = 1時間
+    }), 5400000);
 });
 client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -128,65 +124,37 @@ client.on("messageCreate", (message) => __awaiter(void 0, void 0, void 0, functi
         const inTime = new Date();
         const formattedIntime = inTime.toLocaleString(); // 日時を文字列に変換
         const userName = ((_a = message.member) === null || _a === void 0 ? void 0 : _a.nickname) || message.author.username; // ユーザー名を取得
+        const action = "入室";
         let responseMessage = "";
+        console.log("Processing 'i' command for user:", userName);
+        console.log(userName, formattedIntime, action);
         if (userStatus.has(message.author.id)) {
             responseMessage = `${userName}さんは既に入室しています。`;
         }
         else {
-            /*
-            userStatus.set(message.author.id, { inTime });
-            responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！\n`;
-            const quotes = await fetchQuotes2();
-            if (quotes && quotes.length > 0 && option === undefined) {
-              const firstQuote = quotes[0];
-              responseMessage += `"${firstQuote.q}"\n${firstQuote.a}`;
-            }
-            if (option === "-jobs") {
-              try {
-                const filepath = path.resolve(__dirname, "../data/quotes/jobs.json");
-                const data = await fs.readFile(filepath, "utf-8");
-                const quotes: string[] = JSON.parse(data);
-      
-                const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-                responseMessage += `"${randomQuote}"\nSteve Jobs`;
-              } catch (error) {
-                console.error("Failed to read jobs.json", error);
-                responseMessage += "Steve Jobsの名言を取得できませんでした。";
-              }
-            }
-            try {
-              const action = "入室";
-              console.log(userName, formattedIntime, action);
-      
-              await appendToSheet(userName, formattedIntime, action);
-              console.log(userName, formattedIntime, action);
-            } catch (error) {
-              console.error("Failed to append to the sheet", error);
-              responseMessage += "スプレッドシートへの記録に失敗しました。";
-            }
-          }
-            */
-            console.log("test");
             try {
                 userStatus.set(message.author.id, { inTime });
                 responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！\n`;
-                const action = "入室";
-                // 並行処理で効率化
-                console.log(userName, formattedIntime, action);
-                const [quotes, appendResult] = yield Promise.all([
-                    fetchQuotes2(),
-                    (0, index_js_1.appendToSheet)(userName, formattedIntime, action),
-                ]);
-                if (quotes && quotes.length > 0 && option === undefined) {
-                    const firstQuote = quotes[0];
-                    responseMessage += `"${firstQuote.q}"\n${firstQuote.a}`;
-                }
+                (0, index_js_1.appendToSheet)(userName, formattedIntime, action);
                 if (option === "-jobs") {
                     const filepath = path_1.default.resolve(__dirname, "../data/quotes/jobs.json");
                     const data = yield promises_1.default.readFile(filepath, "utf-8");
                     const jobsQuotes = JSON.parse(data);
                     const randomQuote = jobsQuotes[Math.floor(Math.random() * jobsQuotes.length)];
                     responseMessage += `"${randomQuote}"\nSteve Jobs`;
+                }
+                else if (option === "-kaori") {
+                    responseMessage += "This is a test";
+                    const filepath = path_1.default.resolve(__dirname, "../data/quotes/kaori.json");
+                    const data = yield promises_1.default.readFile(filepath, "utf-8");
+                    const kaoriQuotes = JSON.parse(data);
+                    const randomQuote = kaoriQuotes[Math.floor(Math.random() * kaoriQuotes.length)];
+                    responseMessage += `"${randomQuote.quote}"\ntest${randomQuote.author}`;
+                }
+                else {
+                    const [quotes] = yield Promise.all([fetchQuotes2()]);
+                    const firstQuote = quotes[0];
+                    responseMessage += `"${firstQuote.q}"\n${firstQuote.a}`;
                 }
             }
             catch (error) {

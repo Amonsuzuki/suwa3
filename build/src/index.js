@@ -19,34 +19,18 @@ const auth = new google.auth.GoogleAuth({
 const sheets = google.sheets({ version: "v4", auth });
 // スプレッドシートID（URLから取得）
 const spreadsheetId = "1I0urZjHlNN9t7JAynZaIeAH_qyB_5SD4IsXrXxSt3i4";
-function validateRow(row) {
-    // 各セルが文字列であることを確認
-    return row.every((cell) => typeof cell === "string" && cell.trim() !== "");
-}
 function appendToSheet(userName, Time, action) {
     return __awaiter(this, void 0, void 0, function* () {
-        const newRow = [[Time, userName, action]];
-        console.log(newRow);
+        const values = [[Time, userName, action]];
+        console.log(values);
         try {
-            const getResponse = yield sheets.spreadsheets.values.get({
-                spreadsheetId,
-                range: "シート1",
-            });
-            const existingRows = getResponse.data.values || [];
-            console.log(existingRows);
-            const numROws = existingRows.length;
-            const range = `シート1!A${numROws + 1}`;
-            const updatedRows = [newRow, ...existingRows];
-            if (!validateRow(updatedRows)) {
-                throw new Error("新しいデータの形式が不正です");
-            }
             // データをシートに追加
-            yield sheets.spreadsheets.values.update({
+            yield sheets.spreadsheets.values.append({
                 spreadsheetId,
-                range: range,
+                range: "シート1!A1",
                 valueInputOption: "RAW",
                 resource: {
-                    values: updatedRows,
+                    values,
                 },
             });
             console.log("データをGoogleスプレッドシートに出力しました");

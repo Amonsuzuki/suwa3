@@ -127,7 +127,11 @@ client.on("messageCreate", async (message: Message) => {
     const inTime = new Date();
     const formattedIntime = inTime.toLocaleString(); // 日時を文字列に変換
     const userName = message.member?.nickname || message.author.username; // ユーザー名を取得
+    const action = "入室";
     let responseMessage = "";
+
+    console.log("Processing 'i' command for user:", userName);
+    console.log(userName, formattedIntime, action);
 
     if (userStatus.has(message.author.id)) {
       responseMessage = `${userName}さんは既に入室しています。`;
@@ -136,9 +140,6 @@ client.on("messageCreate", async (message: Message) => {
         userStatus.set(message.author.id, { inTime });
         responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！\n`;
 
-        const action = "入室";
-        // 並行処理で効率化
-        console.log(userName, formattedIntime, action);
         appendToSheet(userName, formattedIntime, action);
 
         if (option === "-jobs") {
@@ -148,15 +149,15 @@ client.on("messageCreate", async (message: Message) => {
           const randomQuote =
             jobsQuotes[Math.floor(Math.random() * jobsQuotes.length)];
           responseMessage += `"${randomQuote}"\nSteve Jobs`;
-        }
-        if (option === "-kaori") {
+        } else if (option === "-kaori") {
+          responseMessage += "This is a test";
           const filepath = path.resolve(__dirname, "../data/quotes/kaori.json");
           const data = await fs.readFile(filepath, "utf-8");
           const kaoriQuotes: { quote: string; author: string }[] =
             JSON.parse(data);
           const randomQuote =
             kaoriQuotes[Math.floor(Math.random() * kaoriQuotes.length)];
-          responseMessage += `"${randomQuote.quote}"\n${randomQuote.author}`;
+          responseMessage += `"${randomQuote.quote}"\ntest${randomQuote.author}`;
         } else {
           const [quotes] = await Promise.all([fetchQuotes2()]);
           const firstQuote = quotes[0];
