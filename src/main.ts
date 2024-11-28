@@ -81,7 +81,7 @@ async function fetchQuotes2(): Promise<any> {
 }
 
 const userStatus = new Map<string, { inTime: Date }>();
-/*
+
 client.once("ready", () => {
   if (client.user) {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -98,27 +98,23 @@ client.once("ready", () => {
     if (
       channel?.isTextBased() &&
       channel.type !== ChannelType.DM &&
-      "guild" in channel
+      "guild" in channel &&
+      userStatus.size > 0
     ) {
       let responseMessage = "現在、以下のユーザーが滞在中です。\n";
-      if (userStatus.size > 0) {
-        userStatus.forEach((value, userId) => {
-          const member = channel.guild.members.cache.get(userId); // channel.guild を安全に使用
-          if (member) {
-            const userName = member.nickname || member.user.username;
-            responseMessage += `${userName}さん\n`;
-          }
-        });
-        channel.send(responseMessage);
-      } else {
-        channel.send("現在入室中のユーザーはいません。");
-      }
+      userStatus.forEach((value, userId) => {
+        const member = channel.guild.members.cache.get(userId); // channel.guild を安全に使用
+        if (member) {
+          const userName = member.nickname || member.user.username;
+          responseMessage += `${userName}さん\n`;
+        }
+      });
+      channel.send(responseMessage);
     } else {
       console.error("指定されたチャンネルはメッセージを送信できません。");
     }
-  }, 3600000); // 3600000ミリ秒 = 1時間
+  }, 5400000);
 });
-*/
 
 client.on("messageCreate", async (message: Message) => {
   if (message.author.bot) return;
