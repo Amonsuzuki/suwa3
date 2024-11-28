@@ -132,40 +132,6 @@ client.on("messageCreate", async (message: Message) => {
     if (userStatus.has(message.author.id)) {
       responseMessage = `${userName}さんは既に入室しています。`;
     } else {
-      /*
-      userStatus.set(message.author.id, { inTime });
-      responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！\n`;
-      const quotes = await fetchQuotes2();
-      if (quotes && quotes.length > 0 && option === undefined) {
-        const firstQuote = quotes[0];
-        responseMessage += `"${firstQuote.q}"\n${firstQuote.a}`;
-      }
-      if (option === "-jobs") {
-        try {
-          const filepath = path.resolve(__dirname, "../data/quotes/jobs.json");
-          const data = await fs.readFile(filepath, "utf-8");
-          const quotes: string[] = JSON.parse(data);
-
-          const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-          responseMessage += `"${randomQuote}"\nSteve Jobs`;
-        } catch (error) {
-          console.error("Failed to read jobs.json", error);
-          responseMessage += "Steve Jobsの名言を取得できませんでした。";
-        }
-      }
-      try {
-        const action = "入室";
-        console.log(userName, formattedIntime, action);
-
-        await appendToSheet(userName, formattedIntime, action);
-        console.log(userName, formattedIntime, action);
-      } catch (error) {
-        console.error("Failed to append to the sheet", error);
-        responseMessage += "スプレッドシートへの記録に失敗しました。";
-      }
-    }
-      */
-      console.log("test");
       try {
         userStatus.set(message.author.id, { inTime });
         responseMessage = `${userName}さんが${formattedIntime}に入室しました。ウェルカム！\n`;
@@ -173,16 +139,7 @@ client.on("messageCreate", async (message: Message) => {
         const action = "入室";
         // 並行処理で効率化
         console.log(userName, formattedIntime, action);
-
-        const [quotes, appendResult] = await Promise.all([
-          fetchQuotes2(),
-          appendToSheet(userName, formattedIntime, action),
-        ]);
-
-        if (quotes && quotes.length > 0 && option === undefined) {
-          const firstQuote = quotes[0];
-          responseMessage += `"${firstQuote.q}"\n${firstQuote.a}`;
-        }
+        appendToSheet(userName, formattedIntime, action);
 
         if (option === "-jobs") {
           const filepath = path.resolve(__dirname, "../data/quotes/jobs.json");
@@ -191,6 +148,19 @@ client.on("messageCreate", async (message: Message) => {
           const randomQuote =
             jobsQuotes[Math.floor(Math.random() * jobsQuotes.length)];
           responseMessage += `"${randomQuote}"\nSteve Jobs`;
+        }
+        if (option === "-kaori") {
+          const filepath = path.resolve(__dirname, "../data/quotes/kaori.json");
+          const data = await fs.readFile(filepath, "utf-8");
+          const kaoriQuotes: { quote: string; author: string }[] =
+            JSON.parse(data);
+          const randomQuote =
+            kaoriQuotes[Math.floor(Math.random() * kaoriQuotes.length)];
+          responseMessage += `"${randomQuote.quote}"\n${randomQuote.author}`;
+        } else {
+          const [quotes] = await Promise.all([fetchQuotes2()]);
+          const firstQuote = quotes[0];
+          responseMessage += `"${firstQuote.q}"\n${firstQuote.a}`;
         }
       } catch (error) {
         console.error("エラーが発生しました:", error);
